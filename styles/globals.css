@@ -1,0 +1,347 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+/* INDEX PAGE */
+.home {
+  display: flex;
+  flex-direction: column;
+}
+
+/* STUDENT SPLASH PAGE */
+
+.splashContainer {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  text-align: center;
+}
+
+.splashLogo {
+  width: 100px;
+  /* Set your logo size */
+  height: 100px;
+  animation: bounceInOut 2s ease-in-out;
+  animation: slideInLeft 1.2s ease-in;
+}
+
+.splashText {
+  margin-left: -1rem;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 800;
+  animation: bounceInOut 2s ease-in-out;
+  animation: slideInRight 1.2s ease-in;
+}
+
+@keyframes bounceInOut {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  25%,
+  75% {
+    transform: translateY(-20px);
+  }
+
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(10);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(10);
+  }
+}
+
+.bold-text {
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 800;
+}
+
+.signUpLogin {
+  display: flex;
+  flex-direction: row;
+}
+
+/* SIGNUP-Signin */
+.signUpLogin {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  color: white;
+  font-size: 1rem;
+}
+
+.boxcColor>a {
+  color: white;
+}
+
+.boxcColor {
+  margin: 2rem;
+  border-radius: 1.2rem;
+  padding: 6rem;
+  background: #319F43;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .boxcColor {
+    display: flex;
+    font-size: 1rem;
+    margin: .8rem;
+    border-radius: 1.2rem;
+    padding: 3rem 1rem;
+    flex-direction: row;
+  }
+}
+
+a {
+  text-decoration: none;
+  text-transform: none;
+  color: black;
+}
+
+.loginLink {
+  position: relative;
+  height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* STUDENT SIGNUP PAGE  */
+.signUp,
+.signUpAuth {
+  display: flex;
+  flex-direction: column;
+  margin: 2rem 0rem;
+  padding:0 2rem;
+
+}
+@media (min-width: 768px) {
+  .signUp,
+  .signUpAuth {
+    display: flex;
+    padding:0 9rem;
+    flex-direction: column;
+    margin: 2rem 0rem;
+  
+  }
+}
+.signUpHeader {
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.signUp>.signUpHeader>h3,
+.signUpHeader>h3 {
+  margin: 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.signUpHeader>div {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.signUpHeader>div>button {
+  padding: 15px;
+  border: none;
+  outline: none;
+  color: white;
+  background-color: #319f43;
+  font-size: 0.8rem;
+  border-radius: 7px;
+}
+
+.signUpForm {
+  margin: 2rem 0.5rem;
+  margin-right: 2rem;
+}
+
+.completeAuth>signUpBtn>a {
+  color: white;
+}
+
+label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0.8rem 0;
+}
+
+.signUpForm>form>input {
+  background: #efefef;
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+  padding: 0.7rem;
+}
+
+.signUpForm>form>input::placeholder {
+  padding-left: 0.2rem;
+}
+
+.signUpBtn {
+  margin: 2rem 0;
+  color: white;
+  background: #319f43;
+  border-radius: 9px;
+  padding: 0.9rem 2.3rem;
+  outline: none;
+  border: none;
+}
+
+.sexOption>select {
+  width: 100%;
+  padding: 0.7rem;
+  background: #efefef;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+}
+
+/* SIGNIN option */
+
+.optionContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: ce;
+  color: white;
+  font-size: 1rem;
+  margin: 2rem;
+
+}
+
+.boxcContainer>a {
+  color: white;
+}
+
+.boxcContainer {
+  margin: 2rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.2rem;
+  padding: 3rem;
+  background: #319F43;
+  text-align: center;
+}
+
+.or {
+  color: black;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+}
+
+/* SIGNUP AUTH */
+/* SIGNUPAUTHCOMPLETE */
+.signUpAuthComplete {
+  display: flex;
+  flex-direction: column;
+  margin: 2rem 1rem;
+}
+
+.authComplete {
+  margin: 1rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.completeAuth {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 4rem;
+}
+
+.completeAuth>h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+.dashboardPage{
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+.welcome{
+  display: flex;
+  flex-direction: row;
+  text-align:center;
+  justify-content: space-between;
+  padding: 1rem;
+}
+.resetPassword{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding:1rem  5rem;
+
+}
+.resetPassword>input {
+  background: #efefef;
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+  padding: 0.7rem;
+}
+.resetBtn {
+  margin: 2rem 0;
+  color: white;
+  background: #319f43;
+  border-radius: 9px;
+  padding: 0.9rem 2.3rem;
+  outline: none;
+  border: none;
+}
