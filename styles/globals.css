@@ -1,10 +1,12 @@
 * {
   margin: 0;
   padding: 0;
+  font-family: sans-serif;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: sans-serif;
+  text-align: center;
 }
 
 /* INDEX PAGE */
@@ -120,6 +122,15 @@ body {
     padding: 3rem 1rem;
     flex-direction: row;
   }
+  .loginLink {
+    height: 20vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.0rem;
+    font-weight: 400;
+  }
 }
 
 a {
@@ -167,11 +178,12 @@ a {
 }
 
 .signUp>.signUpHeader>h3,
-.signUpHeader>h3 {
+.signUpHeader>h2 {
   margin: 1rem;
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 500;
 }
+
 
 .signUpHeader>div {
   display: flex;
@@ -328,6 +340,9 @@ label {
   padding:1rem  5rem;
 
 }
+button{
+  cursor: pointer;
+}
 .resetPassword>input {
   background: #efefef;
   width: 100%;
@@ -344,4 +359,31 @@ label {
   padding: 0.9rem 2.3rem;
   outline: none;
   border: none;
+}
+.alert {
+  padding: 10px;
+  border-radius: 5px;
+  background-color: red;
+  border: 1px solid;
+}
+
+.error {
+  color: red;
+  background-color: #ffe6e6;
+  border-color: red;
+}
+li{
+  cursor: pointer;
+}
+
+.success {
+  color: green;
+  background-color: #e6ffe6;
+  border-color: green;
+}
+.qrImg{
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin: 2rem auto;
 }

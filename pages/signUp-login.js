@@ -36,7 +36,7 @@ function SignUpLogin() {
                 </div>
             </div>
             <div >
-                <Link href="/studentsPage/signUp/page" className="loginLink">Already have an account Signup </Link>          
+                <Link href="/studentsPage/signUp/page" className="loginLink">Don't have an account Signup </Link>          
             </div>
         </div>
     );

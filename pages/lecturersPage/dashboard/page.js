@@ -1,37 +1,70 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { firestore } from "@/firebase";
 
-function Dashboard() {
+function LecturerDashboard() {
   const [user, setUser] = useState(null);
-  const [profileImage, setProfileImage] = useState(null);
-  const [isImageSaved, setIsImageSaved] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [newCourse, setNewCourse] = useState("");
 
   useEffect(() => {
-    // Retrieve user data from session
-    const userData = JSON.parse(sessionStorage.getItem('user'));
+    const userData = JSON.parse(sessionStorage.getItem("user"));
     setUser(userData);
+
+    // Fetch courses only if user data is available
+    if (userData) {
+      fetchCourses(userData.name);
+    }
   }, []);
 
+  useEffect(() => {
+    // Fetch courses again if user changes
+    if (user) {
+      fetchCourses(user.name);
+    }
+  }, [user]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileImage(reader.result);
-      setIsImageSaved(false); // Reset flag when a new image is selected
-    };
-    if (file) {
-      reader.readAsDataURL(file);
+  const fetchCourses = async (lecturerName) => {
+    try {
+      if (!lecturerName) {
+        return;
+      }
+
+      const coursesRef = firestore.collection("courses").where("lecturerName", "==", lecturerName);
+      const snapshot = await coursesRef.get();
+      const fetchedCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCourses(fetchedCourses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      alert("Error fetching courses. Please try again later.");
     }
   };
 
-  // Function to update user data with the new profile image
-  const updateProfileImage = () => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      profileImage: profileImage,
-    }));
-    setIsImageSaved(true); // Set flag to indicate image is saved
-    // You may also want to update the sessionStorage here to persist the changes
+  const handleInputChange = (e) => {
+    let inputValue = e.target.value.toUpperCase();
+    inputValue = inputValue.replace(/[^A-Z0-9]/g, "");
+    if (inputValue.length <= 6) {
+      setNewCourse(inputValue);
+    }
+  };
+
+  const saveCourse = async () => {
+    if (newCourse.trim() !== "") {
+      const existingCourse = courses.find(c => c.title === newCourse);
+      if (existingCourse) {
+        alert("Error: A course with the same title already exists. Please choose a different title.");
+        return;
+      }
+
+      const courseRef = firestore.collection("courses").doc(); 
+      await courseRef.set({
+        title: newCourse,
+        lecturerName: user.name,
+      });
+
+      // Fetch courses again after saving to update the list
+      fetchCourses(user.name);
+      setNewCourse("");
+    }
   };
 
   return (
@@ -39,31 +72,38 @@ function Dashboard() {
       <h2>Lecturer Dashboard</h2>
       {user && (
         <div className="dashboardPage">
-        <span className="welcome">  <p style={{display:'flex', gap:'3rem', color:'green'}}>
-        
-         <div className="profile photo"> {profileImage && (
-              <div>
-              <img src={profileImage} alt="Profile" style={{ borderRadius: '50px' , width:'100px' , height:'100px'}} />
-              {!isImageSaved && <button onClick={updateProfileImage}>Save Profile Image</button>}
+          <span className="welcome">
+            <h2>{user.name}</h2>
+          </span>
+          <p>Email: {user.email}</p>
+          <p>College: {user.college}</p>
+          <p>Department: {user.department}</p>
+          <div>
+            <h3>Add Course</h3>
+            <input
+              type="text"
+              value={newCourse}
+              onChange={handleInputChange}
+              placeholder="Enter course title (e.g., ABC123)"
+              maxLength="6"
+            />
+            <button onClick={saveCourse}>Add</button>
+          </div>
+
+          {courses.length > 0 && (
+            <div>
+              <h3>Added Courses</h3>
+              <ul>
+                {courses.map((course, index) => (
+                  <li key={index}>{course.title}</li>
+                ))}
+              </ul>
             </div>
           )}
-          {!profileImage && (
-            <div>
-              <input type="file" accept="image/*" onChange={handleImageChange} />
-            </div>
-          )}</div>
-            <h2 style={{}}>{user.name}</h2>
-        </p>
-          </span>
-
-          <p>Email: {user.email}</p>
-          <p>college: {user.college}</p>
-          <p>department: {user.department}</p>
-          <div><button>Add course </button></div>
         </div>
       )}
     </div>
   );
 }
 
-export default Dashboard;
+export default LecturerDashboard;

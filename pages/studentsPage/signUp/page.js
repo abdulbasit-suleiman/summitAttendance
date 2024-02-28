@@ -105,6 +105,7 @@ function SignUp() {
     }
 
     if (hasErrors) {
+      
       alert('Please check for errors in the following fields:\n' +
         nameErrorRef.current + '\n' +
         collegeErrorRef.current + '\n' +
