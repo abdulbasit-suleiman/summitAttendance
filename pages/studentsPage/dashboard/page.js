@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { firestore } from "@/firebase";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [isImageSaved, setIsImageSaved] = useState(false);
-  const [courseIdInput, setCourseIdInput] = useState("");
-  const [courseDetails, setCourseDetails] = useState(null);
+  const [lecturerCodeInput, setLecturerCodeInput] = useState("");
+  const [lecturerName, setLecturerName] = useState("");
+  const [attendanceDate, setAttendanceDate] = useState("");
+  const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
 
   useEffect(() => {
-    // Retrieve user data from session
     const userData = JSON.parse(sessionStorage.getItem("user"));
     setUser(userData);
   }, []);
@@ -19,7 +20,7 @@ function Dashboard() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfileImage(reader.result);
-      setIsImageSaved(false); // Reset flag when a new image is selected
+      setIsImageSaved(false);
     };
     if (file) {
       reader.readAsDataURL(file);
@@ -31,43 +32,68 @@ function Dashboard() {
       ...prevUser,
       profileImage: profileImage,
     }));
-    setIsImageSaved(true); // Set flag to indicate image is saved
-    // You may also want to update the sessionStorage here to persist the changes
+    setIsImageSaved(true);
+    // Update session storage here if needed
   };
 
-  const handleCourseIdChange = (e) => {
-    setCourseIdInput(e.target.value.toUpperCase()); // Convert to uppercase
+  const handleLecturerCodeChange = (e) => {
+    setLecturerCodeInput(e.target.value.toUpperCase());
   };
 
-  const fetchCourseDetails = async () => {
+
+  const verifyLecturerCode = async () => {
     try {
-      const courseRef = firestore.collection("courses").doc(courseIdInput);
-      const doc = await courseRef.get();
-      if (doc.exists) {
-        setCourseDetails(doc.data());
+      if (!lecturerCodeInput) {
+        alert("Please enter a lecturer code.");
+        return;
+      }
+  
+      const coursesRef = firestore.collection("courses");
+      const querySnapshot = await coursesRef.where("uniqueCode", "==", lecturerCodeInput).get();
+  
+      if (!querySnapshot.empty) {
+        const courseData = querySnapshot.docs[0].data();
+        setLecturerName(courseData.lecturerName);
       } else {
         alert("Course not found!");
+        setLecturerName("");
       }
     } catch (error) {
-      console.error("Error fetching course details:", error);
-      alert("Error fetching course details. Please try again later.");
+      console.error("Error verifying lecturer code:", error);
+      alert("Error verifying lecturer code. Please try again later.");
     }
   };
+  
+  
+  
+  
+  
 
   const markAttendance = async () => {
     try {
-      const attendanceRef = firestore.collection("attendancesheets").doc(courseIdInput);
-      const attendanceDoc = await attendanceRef.get();
-      if (attendanceDoc.exists) {
-        // Add code to mark attendance for the current user
-        alert("Attendance marked successfully!");
-      } else {
-        alert("Attendance sheet not found for this course!");
+      if (!lecturerName || !attendanceDate) {
+        alert("Please verify lecturer and select date first.");
+        return;
       }
+
+      // Update attendance sheet in Firebase
+      const attendanceRef = firestore.collection("attendance").doc(lecturerName);
+      await attendanceRef.update({
+        [user.matricNo]: {
+          date: attendanceDate,
+        },
+      });
+
+      setIsAttendanceMarked(true);
+      alert("Attendance marked successfully!");
     } catch (error) {
       console.error("Error marking attendance:", error);
       alert("Error marking attendance. Please try again later.");
     }
+  };
+
+  const handleDateChange = (e) => {
+    setAttendanceDate(e.target.value);
   };
 
   return (
@@ -76,7 +102,6 @@ function Dashboard() {
       {user && (
         <div className="dashboardPage">
           <span className="welcome">
-            <p style={{ display: "flex", gap: "3rem", color: "green" }}>
               <div className="profile photo">
                 {profileImage && (
                   <div>
@@ -95,30 +120,35 @@ function Dashboard() {
                 )}
               </div>
               <h2 style={{}}>{user.name}</h2>
-            </p>
           </span>
 
           <p> {user.matricNo}</p>
           <p>Email: {user.email}</p>
-          <p>college: {user.college}</p>
-          <p>department: {user.department}</p>
+          <p>College: {user.college}</p>
+          <p>Department: {user.department}</p>
 
           <div>
             <input
               type="text"
-              value={courseIdInput}
-              onChange={handleCourseIdChange}
-              placeholder="Enter course ID"
+              value={lecturerCodeInput}
+              onChange={handleLecturerCodeChange}
+              placeholder="Enter lecturer code"
             />
-            <button onClick={fetchCourseDetails}>Fetch Course Details</button>
+            <button onClick={verifyLecturerCode}>Verify Lecturer</button>
           </div>
 
-          {courseDetails && (
+          {lecturerName && (
             <div>
-              <h3>Course Details:</h3>
-              <p>Title: {courseDetails.title}</p>
-              <p>Lecturer: {courseDetails.lecturerName}</p>
-              <button onClick={markAttendance}>Mark Attendance</button>
+              <h3>Lecturer: {lecturerName}</h3>
+              <div>
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={handleDateChange}
+                  placeholder="Select Date"
+                />
+                <button onClick={markAttendance}>Mark Attendance</button>
+              </div>
             </div>
           )}
         </div>

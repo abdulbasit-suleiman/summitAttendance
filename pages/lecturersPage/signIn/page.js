@@ -45,7 +45,7 @@ export default function SignIn() {
       <div className="signUpHeader">
         <Image src={Logo} alt="" width={100} height={100} />
         <h4 className="bold-text">Student Attendance</h4>
-        <h3>Sign Up As Lecturer</h3>
+        <h3>Sign In As Lecturer</h3>
       </div>
       <div className="signUpForm">
         {errorMessage && <p className="error-message" style={{fontSize:'2rem',textAlign:"center"}}>{errorMessage}</p>}
