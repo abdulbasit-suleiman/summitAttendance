@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { auth } from '@/firebase';
@@ -6,13 +5,11 @@ import Image from 'next/image';
 import { firestore } from '@/firebase';
 import Link from 'next/link';
 
-
 const Logo = "/asset/logo.svg";
-
 
 export default function SignIn() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [matricNo, setMatricNo] = useState(''); // Changed state variable name
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -21,11 +18,10 @@ export default function SignIn() {
     setErrorMessage('');
 
     try {
-      const userSnapshot = await firestore.collection('users').where('email', '==', email).get();
+      const userSnapshot = await firestore.collection('users').where('matricNo', '==', matricNo).get(); // Adjusted to query matricNo
       if (!userSnapshot.empty) {
         const userData = userSnapshot.docs[0].data();
         if (userData.password === password) {
-          // Store user data in session upon successful sign-in
           sessionStorage.setItem('user', JSON.stringify(userData));
           router.push('../dashboard/page');
         } else {
@@ -50,7 +46,7 @@ export default function SignIn() {
       <div className="signUpForm">
         {errorMessage && <p className="error-message" style={{fontSize:'2rem',textAlign:"center"}}>{errorMessage}</p>}
       <form onSubmit={handleSignIn}>
-      <label htmlFor="Email">
+      <label htmlFor="MatriculationNumber"> {/* Changed label */}
           <svg
               width="24"
               height="24"
@@ -64,7 +60,7 @@ export default function SignIn() {
               />
             </svg>
           </label>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input type="text" placeholder="Matriculation Number" value={matricNo} onChange={(e) => setMatricNo(e.target.value)} /> {/* Changed input type */}
         <label htmlFor="Password">
             XXXXXX
           </label>

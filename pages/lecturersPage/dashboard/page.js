@@ -7,12 +7,9 @@ function LecturerDashboard() {
   const [newCourse, setNewCourse] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [courseTitleInput, setCourseTitleInput] = useState("");
+  const [isFetchingAttendance, setIsFetchingAttendance] = useState(false);
 
-  const [newStudentName, setNewStudentName] = useState("");
-  const [newStudentMatricNo, setNewStudentMatricNo] = useState("");
-  const [newDate, setNewDate] = useState("");
-
-  // Fetch courses upon initial render and user change
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
     setUser(userData);
@@ -68,63 +65,101 @@ function LecturerDashboard() {
         alert("Error: A course with the same title already exists. Please choose a different title.");
         return;
       }
-  
-      // Generate a unique code before setting the document
+
       const uniqueCode = generateUniqueCode();
-  
+
       const courseRef = firestore.collection("courses").doc();
       await courseRef.set({
         title: newCourse,
         lecturerName: user.name,
-        uniqueCode: uniqueCode, // Ensure uniqueCode is set before saving
-        attendance: [], // Initialize empty attendance sheet
+        uniqueCode: uniqueCode,
+        attendance: [],
       });
-  
+
       fetchCourses(user.name);
       setNewCourse("");
     }
   };
-  
-  const handleCourseClick = (course) => {
+
+  const handleCourseClick = async (course) => {
     setSelectedCourse(course);
-    setAttendanceRecords(course.attendance || []);
-    // Clear student input fields when selecting a course
-    setNewStudentName("");
-    setNewStudentMatricNo("");
-    setNewDate("");
-  };
+    setIsFetchingAttendance(true); // Set loading indicator to true
+    
+    try {
+        const courseRef = firestore.collection("courses").doc(course.id); // Assuming course.id exists
+        const courseDoc = await courseRef.get();
 
-  const handleAddStudent = async () => {
-    if (newStudentName.trim() === "" || newStudentMatricNo.trim() === "") {
-      alert("Please enter both name and matriculation number.");
-      return;
+        if (!courseDoc.exists) {
+            throw new Error("Course document not found");
+        }
+
+        const courseData = courseDoc.data();
+
+        if (!courseData.attendance || !Array.isArray(courseData.attendance)) {
+            setAttendanceRecords([]); // No attendance records found, set empty array
+        } else {
+            setAttendanceRecords(courseData.attendance); // Set attendance records
+        }
+    } catch (error) {
+        console.error("Error fetching attendance records:", error);
+        alert("Error fetching attendance records. Please try again later.");
+    } finally {
+        setIsFetchingAttendance(false); // Set loading indicator to false
     }
+};
 
-    const updatedAttendance = [...attendanceRecords, { name: newStudentName, matricNo: newStudentMatricNo }];
 
-    // Update course document with updated attendance list
-    await firestore.collection("courses").doc(selectedCourse.id).update({ attendance: updatedAttendance });
-
-    setAttendanceRecords(updatedAttendance);
-    setNewStudentName(""); // Clear name field after adding
-    setNewStudentMatricNo(""); // Clear matriculation number field after adding
-    setNewDate(""); // Clear matriculation number field after adding
+  const handleCourseTitleInput = (e) => {
+    setCourseTitleInput(e.target.value.toUpperCase());
   };
+  const fetchAttendanceRecords = async () => {
+    setIsFetchingAttendance(true); // Set loading indicator to true
+    try {
+        if (!courseTitleInput) {
+            alert("Please enter a course title.");
+            return;
+        }
+
+        const courseRef = firestore.collection("courses").where("title", "==", courseTitleInput);
+        const snapshot = await courseRef.get();
+
+        if (snapshot.empty) {
+            alert("No course found with the provided title.");
+            return;
+        }
+
+        const courseDoc = snapshot.docs[0];
+        const courseData = courseDoc.data();
+
+        if (!courseData.attendance || !Array.isArray(courseData.attendance) || courseData.attendance.length === 0) {
+            alert("No attendance records found for this course.");
+            return;
+        }
+
+        setAttendanceRecords(courseData.attendance); // Set attendance records
+    } catch (error) {
+        console.error("Error fetching attendance records:", error);
+        alert("Error fetching attendance records. Please try again later.");
+    } finally {
+        setIsFetchingAttendance(false); // Set loading indicator to false
+    }
+};
 
   return (
     <div className="dashboard">
-      <h2>Lecturer Dashboard</h2>
+      <h2 className="dashboard-title">Lecturer Dashboard</h2>
       {user && (
-        <div className="dashboardPage">
+        <div className="dashboard-content">
           <span className="welcome">
-            <h2>{user.name}</h2>
+            <h2>Welcome, {user.name}</h2>
           </span>
-          <p>Email: {user.email}</p>
-          <p>College: {user.college}</p>
-          <p>Department: {user.department}</p>
-  
-          {/* Add course section */}
-          <div>
+          <div className="user-info">
+            <p>Email: {user.email}</p>
+            <p>College: {user.college}</p>
+            <p>Department: {user.department}</p>
+          </div>
+        
+          <div className="add-course">
             <h3>Add Course</h3>
             <input
               type="text"
@@ -136,63 +171,50 @@ function LecturerDashboard() {
             <button onClick={saveCourse}>Add</button>
           </div>
   
-          {/* Added courses and attendance section */}
+          <div className="fetch-attendance">
+            <h3>Fetch Attendance by Course Title</h3>
+            <input
+              type="text"
+              value={courseTitleInput}
+              onChange={handleCourseTitleInput}
+              placeholder="Enter course title"
+            />
+            <button onClick={fetchAttendanceRecords}>Fetch</button>
+          </div>
+  
+          {isFetchingAttendance && <p className="loading-message">Fetching attendance records...</p>}
+  
+          {attendanceRecords.length > 0 && (
+            <div className="attendance-records">
+              <h3>Attendance Records</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Matriculation Number</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendanceRecords.map((record, index) => (
+                    <tr key={index}>
+                      <td>{record.name}</td>
+                      <td>{record.matricNo}</td>
+                      <td>{record.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+  
           {courses.length > 0 && (
-            <div>
+            <div className="added-courses">
               <h3>Added Courses</h3>
               <ul>
                 {courses.map((course, index) => (
                   <li key={index} onClick={() => handleCourseClick(course)}>
                     {course.title} - Unique Code: {course.uniqueCode}
-                    {selectedCourse && selectedCourse.id === course.id && (
-                      <div>
-                        {/* Attendance sheet for selected course */}
-                        <p>Attendance Records for {course.title}</p>
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>Matriculation Number</th>
-                              {/* Add date column */}
-                              <th>Date</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {attendanceRecords.map((record, idx) => (
-                              <tr key={idx}>
-                                <td>{record.name}</td>
-                                <td>{record.matricNo}</td>
-                                <td>{record.date}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-  
-                        {/* Add student form */}
-                        <div>
-                          <input
-                            type="text"
-                            value={newStudentName}
-                            onChange={(e) => setNewStudentName(e.target.value)}
-                            placeholder="Name will be here"
-                          />
-                          
-                          <input
-                            type="text"
-                            value={newStudentMatricNo}
-                            onChange={(e) => setNewStudentMatricNo(e.target.value)}
-                            placeholder="MatricNo  will be here"
-                          />
-                          <input
-                            type="text"
-                            value={newDate}
-                            onChange={(e) => setNewDate(e.target.value)}
-                            placeholder="Date will be here "
-                          />
-                          <button onClick={handleAddStudent}>Add Student</button>
-                        </div>
-                      </div>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -201,7 +223,7 @@ function LecturerDashboard() {
         </div>
       )}
     </div>
-  );
-}
+  );}
+  
 
 export default LecturerDashboard;

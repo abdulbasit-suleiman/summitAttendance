@@ -376,14 +376,148 @@ li{
   cursor: pointer;
 }
 
-.success {
-  color: green;
-  background-color: #e6ffe6;
-  border-color: green;
+
+
+
+
+/* Styling for the dashboard container */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f4f4;
+  padding: 20px;
 }
-.qrImg{
-  display: block;
+
+/* Styling for the main title */
+.dashboard-title {
+  color: #319f43;
+  margin-bottom: 20px;
+}
+
+/* Styling for the dashboard content */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 480px;
-  margin: 2rem auto;
+}
+
+/* Styling for the welcome message */
+.welcome h2 {
+  color: #319f43;
+  margin-bottom: 10px;
+}
+
+/* Styling for user info */
+.user-info {
+  color: #319f43;
+  font-weight: bold;
+}
+
+/* Styling for user details */
+.user-details p {
+  margin-bottom: 5px;
+}
+
+/* Styling for input fields */
+input[type="text"] {
+  padding: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* Styling for buttons */
+button {
+  background-color: #319f43;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+/* Styling for loading message */
+.loading-message {
+  color: #319f43;
+}
+
+/* Styling for attendance records */
+.attendance-records table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.attendance-records th,
+.attendance-records td {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+.attendance-records th {
+  background-color: #319f43;
+  color: #ffffff;
+}
+
+/* Styling for added courses list */
+.added-courses ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.added-courses li {
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid #dddddd;
+  width: 100%;
+}
+
+/* Styling for marked attendance list */
+.marked-attendance ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.marked-attendance li {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #319f43;
+  border-radius: 5px;
+}
+
+/* Styling for left sidebar */
+.left-sidebar {
+  flex: 1;
+  margin-right: 20px;
+}
+
+/* Styling for right sidebar */
+.right-sidebar {
+  flex: 1;
+  margin-left: 20px;
+}
+
+/* Media query for responsiveness */
+@media screen and (max-width: 768px) {
+  .dashboard-content {
+    width: 80%;
+  }
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+}
+
+.user-details {
+  margin-left: 20px; /* Adjust margin as needed */
 }
