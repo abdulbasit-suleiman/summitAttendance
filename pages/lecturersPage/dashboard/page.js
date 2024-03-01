@@ -90,8 +90,7 @@ function LecturerDashboard() {
       fetchCourses(user.name);
       setNewCourse("");
   
-      // Update the unique code after 5 seconds
-      setTimeout(async () => {
+      const updateUniqueCode = async () => {
         const updatedCourseRef = firestore.collection("courses").doc(courseRef.id);
   
         let updatedUniqueCode = generateUniqueCode();
@@ -104,9 +103,16 @@ function LecturerDashboard() {
         });
   
         fetchCourses(user.name);
-      }, 5 * 60 * 1000); // 5 minutes in milliseconds
+  
+        // Schedule the next update after 3 minutes
+        setTimeout(updateUniqueCode, 2 * 6 * 100); // 3 minutes in milliseconds
+      };
+  
+      // Schedule the first update after 3 minutes
+      setTimeout(updateUniqueCode, 2 * 6 * 100); // 3 minutes in milliseconds
     }
   };
+  
 
   const handleCourseClick = async (course) => {
     setSelectedCourse(course);
@@ -160,6 +166,7 @@ function LecturerDashboard() {
         name: doc.data().name,
         date: doc.data().date,
         time: doc.data().time,
+        presence: doc.data().presence || 0, // Retrieve presence count
       }));
   
       setAttendanceRecords(attendanceArray); // Set attendance records
@@ -171,10 +178,22 @@ function LecturerDashboard() {
     }
   };
   
-   
-
   
-  
+  // Function to download the attendance sheet
+  const downloadAttendanceSheet = () => {
+    // Convert attendanceRecords to CSV format
+    const csv = attendanceRecords.map(record => `${record.name},${record.matricNo},${record.date},${record.time}`).join("\n");
+    // Create a blob from the CSV data
+    const blob = new Blob([csv], { type: "text/csv" });
+    // Create a download link
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "attendance_sheet.csv";
+    // Trigger the download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="dashboard">
@@ -209,30 +228,33 @@ function LecturerDashboard() {
 
           {isFetchingAttendance && <p className="loading-message">Fetching attendance records...</p>}
           {attendanceRecords.length > 0 && (
-      <div className="attendance-records">
-        <h3>Attendance Records for {courseTitleInput}</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Matriculation Number</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendanceRecords.map((record, index) => (
-              <tr key={index}>
-                <td>{record.name}</td>
-                <td>{record.matricNo}</td>
-                <td>{record.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-
-          {attendanceRecords.length === 0 && !isFetchingAttendance }
+            <div className="attendance-records">
+              <h3>Attendance Records for {courseTitleInput}</h3>
+              <button onClick={downloadAttendanceSheet}>Download Attendance Sheet</button>
+              <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Matriculation Number</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Presence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendanceRecords.map((record, index) => (
+                  <tr key={index}>
+                    <td>{record.name}</td>
+                    <td>{record.matricNo}</td>
+                    <td>{record.date}</td>
+                    <td>{record.time}</td>
+                    <td>{record.presence}</td> {/* Display presence count */}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            </div>
+          )}
 
           {courses.length > 0 && (
             <div className="added-courses">

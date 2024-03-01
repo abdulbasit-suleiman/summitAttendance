@@ -12,25 +12,28 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    const userData = sessionStorage.getItem('user');
-    if (userData) {
-      // User is already authenticated, redirect to dashboard
-      router.replace('../dashboard/page');
-    }
-  }, []);
+
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-
+    
+    if (!email || !password) {
+      // setErrorMessage('Please enter both email and password');
+      alert('Please enter both email and password')
+      return; // Prevent further execution of the function
+    }
+  
     try {
+      console.log('Attempting sign-in with email:', email);
       const userSnapshot = await firestore.collection('users').where('email', '==', email).get();
       if (!userSnapshot.empty) {
         const userData = userSnapshot.docs[0].data();
+        console.log('User data retrieved:', userData);
         if (userData.password === password) {
           // Store user data in session upon successful sign-in
           sessionStorage.setItem('user', JSON.stringify(userData));
+          console.log('Sign-in successful. Redirecting to dashboard.');
           router.replace('../dashboard/page');
         } else {
           setErrorMessage('Invalid password');
@@ -43,7 +46,8 @@ export default function SignIn() {
       setErrorMessage('An error occurred while signing in');
     }
   };
-
+  
+  
   return (
     <div className="signUp">
       <div className="signUpHeader">

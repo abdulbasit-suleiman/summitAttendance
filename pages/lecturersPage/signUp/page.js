@@ -13,6 +13,7 @@ function SignUp() {
   const [college, setCollege] = useState('');
   const [department, setDepartment] = useState('');
   const [password, setPassword] = useState('');
+  const [personalId, setPersonalId] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -22,9 +23,9 @@ function SignUp() {
   const collegeErrorRef = useRef('');
   const departmentErrorRef = useRef('');
   const passwordErrorRef = useRef('');
+  const personalIdErrorRef = useRef('');
 
   // Function to handle form input changes
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     switch (name) {
@@ -48,6 +49,10 @@ function SignUp() {
         setPassword(value);
         passwordErrorRef.current = '';
         break;
+      case 'personalId':
+        setPersonalId(value);
+        personalIdErrorRef.current = '';
+        break;
       default:
         break;
     }
@@ -58,6 +63,7 @@ function SignUp() {
     e.preventDefault();
     setSuccessMessage('');
     setErrorMessage('');
+    personalIdErrorRef.current = '';
 
     let hasErrors = false;
     // Check for empty fields
@@ -68,7 +74,8 @@ function SignUp() {
     if (email.trim() === '') {
       emailErrorRef.current = 'Please enter your email address.';
       hasErrors = true;
-    } if (college.trim() === '') {
+    }
+    if (college.trim() === '') {
       collegeErrorRef.current = 'Please enter your college .';
       hasErrors = true;
     }
@@ -80,15 +87,17 @@ function SignUp() {
       passwordErrorRef.current = 'Please enter your password .';
       hasErrors = true;
     }
-
-    // Check if email already exists
-    const emailSnapshot = await firestore.collection('users').where('email', '==', email).get();
-    if (!emailSnapshot.empty) {
-      emailErrorRef.current = 'Email already exists.';
+    if (personalId.trim() === '') {
+      personalIdErrorRef.current = 'Please enter your personal ID .';
       hasErrors = true;
     }
 
-  
+    // Check if personal ID matches the last three letters of the name
+    const lastName = name.trim().slice(-3).toLowerCase();
+    if (personalId.trim().toLowerCase() !== lastName) {
+      personalIdErrorRef.current = 'Personal ID does not match. You are not a lecturer.';
+      hasErrors = true;
+    }
 
     if (hasErrors) {
       alert('Please check for errors in the following fields:\n' +
@@ -96,11 +105,11 @@ function SignUp() {
         collegeErrorRef.current + '\n' +
         emailErrorRef.current + '\n' +
         passwordErrorRef.current + '\n' +
-        departmentErrorRef.current + '\n'
+        departmentErrorRef.current + '\n' +
+        personalIdErrorRef.current
       );
       return;
     }
-
 
     try {
       // Store user data in Firestore
@@ -112,7 +121,6 @@ function SignUp() {
         password
       });
 
-
       setSuccessMessage('Details have been stored successfully.');
       alert('Account created successfully');
       router.push('../signIn/page');
@@ -120,14 +128,13 @@ function SignUp() {
       setErrorMessage(error.message);
     }
 
-
-
+    // Clear input fields after submission
     setName('');
     setEmail('');
     setCollege('');
     setDepartment('');
     setPassword('');
-
+    setPersonalId('');
   };
   return (
     <div className="signUp">
@@ -206,7 +213,10 @@ function SignUp() {
           <label htmlFor="Password">
             XXXXXX
           </label>
+
           <input type="password" value={password} onChange={handleChange} placeholder="Enter Your unique password" name="password" />
+          <label htmlFor="PersonalId">Personal ID :</label>
+          <input type="text" value={personalId} onChange={handleChange} placeholder="Enter Personal ID" name="personalId" />
           <div className="signUpHeader">
             <button type="submit" className="signUpBtn">Save info</button>
             <h2 style={{ fontWeight: '800' }}>Already have an account <Link href="../signIn/page" style={{ fontWeight: '800' }}>SignIn</Link></h2>
