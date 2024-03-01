@@ -1,20 +1,24 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { auth } from '@/firebase';
-import Image from 'next/image';
 import { firestore } from '@/firebase';
+import Image from 'next/image';
 import Link from 'next/link';
 
-
 const Logo = "/asset/logo.svg";
-
 
 export default function SignIn() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      // User is already authenticated, redirect to dashboard
+      router.replace('../dashboard/page');
+    }
+  }, []);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -27,7 +31,7 @@ export default function SignIn() {
         if (userData.password === password) {
           // Store user data in session upon successful sign-in
           sessionStorage.setItem('user', JSON.stringify(userData));
-          router.push('../dashboard/page');
+          router.replace('../dashboard/page');
         } else {
           setErrorMessage('Invalid password');
         }
@@ -48,10 +52,10 @@ export default function SignIn() {
         <h3>Sign In As Lecturer</h3>
       </div>
       <div className="signUpForm">
-        {errorMessage && <p className="error-message" style={{fontSize:'2rem',textAlign:"center"}}>{errorMessage}</p>}
-      <form onSubmit={handleSignIn}>
-      <label htmlFor="Email">
-          <svg
+        {errorMessage && <p className="error-message" style={{ fontSize: '2rem', textAlign: "center" }}>{errorMessage}</p>}
+        <form onSubmit={handleSignIn}>
+          <label htmlFor="Email">
+            <svg
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -64,17 +68,17 @@ export default function SignIn() {
               />
             </svg>
           </label>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label htmlFor="Password">
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label htmlFor="Password">
             XXXXXX
           </label>
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <div className="signUpHeader">
-        <button type="submit" className="signUpBtn">Sign In</button>
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="signUpHeader">
+            <button type="submit" className="signUpBtn">Sign In</button>
             <div><Link href='/resetPassword'>Reset password</Link></div>
           </div>
-      </form>
-    </div>
+        </form>
+      </div>
     </div>
   );
 }

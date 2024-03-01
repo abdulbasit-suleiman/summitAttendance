@@ -1,33 +1,31 @@
-// Import React, useState, useEffect
 import React, { useState, useEffect } from "react";
-// Import firestore and storage from "@/firebase"
 import { firestore, storage } from "@/firebase";
 
 function Dashboard() {
-  // Define state variables
   const [user, setUser] = useState(null);
   const [lecturerCodeInput, setLecturerCodeInput] = useState("");
   const [lecturerName, setLecturerName] = useState("");
   const [courseTitle, setCourseTitle] = useState("");
   const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
-  const [markedAttendance, setMarkedAttendance] = useState({});
   const [lastMarkedDate, setLastMarkedDate] = useState(null);
+  const [markedAttendance, setMarkedAttendance] = useState([]);
+
   const [isProfilePhotoUploaded, setIsProfilePhotoUploaded] = useState(false);
   const [profilePhotoURL, setProfilePhotoURL] = useState(null);
+
   const [profilePhoto, setProfilePhoto] = useState(null);
 
-  // useEffect to set user state from sessionStorage
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
     setUser(userData);
   }, []);
 
-  // Handler for lecturer code change
   const handleLecturerCodeChange = (e) => {
     setLecturerCodeInput(e.target.value.toUpperCase());
   };
 
-  // Function to verify lecturer code
+ 
+  
   const verifyLecturerCode = async () => {
     try {
       if (!lecturerCodeInput) {
@@ -53,7 +51,8 @@ function Dashboard() {
     }
   };
 
-  // Function to mark attendance
+
+
   const markAttendance = async () => {
     try {
       if (!lecturerName || !courseTitle) {
@@ -62,8 +61,8 @@ function Dashboard() {
       }
 
       const { matricNo, name } = user;
-      const sanitizedMatricNo = matricNo.replace(/[.#$/[\]]/g, "_");
       const markedAt = new Date().toISOString();
+      const markedDate = markedAt.split("T")[0];
 
       const coursesRef = firestore.collection("courses");
       const querySnapshot = await coursesRef
@@ -72,18 +71,20 @@ function Dashboard() {
         .get();
 
       if (!querySnapshot.empty) {
-        const courseDocId = querySnapshot.docs[0].id;
+        const courseDoc = querySnapshot.docs[0];
+        const attendanceRef = courseDoc.ref.collection("attendance");
 
-        const courseDocRef = firestore.collection("courses").doc(courseDocId);
-        const courseDoc = await courseDocRef.get();
-        const attendance = courseDoc.data().attendance || {};
+        // Check if attendance for today exists
+        const attendanceSnapshot = await attendanceRef.where("matricNo", "==", matricNo)
+          .where("date", "==", markedDate)
+          .get();
 
-        const markedDate = markedAt.split("T")[0];
-        if (attendance[`${sanitizedMatricNo}_${courseTitle}`]?.date === markedDate) {
+        if (!attendanceSnapshot.empty) {
           alert("Attendance already marked for today!");
           return;
         }
 
+        // Create attendance record
         const attendanceRecord = {
           matricNo: matricNo,
           name: name,
@@ -91,19 +92,17 @@ function Dashboard() {
           time: markedAt.split("T")[1].split(".")[0],
         };
 
-        await courseDocRef.update({
-          [`attendance.${sanitizedMatricNo}_${courseTitle}`]: attendanceRecord,
-        });
+        await attendanceRef.add(attendanceRecord);
 
         setIsAttendanceMarked(true);
         setLastMarkedDate(markedDate);
 
-        setMarkedAttendance((prevState) => ({
-          ...prevState,
-          [courseTitle]: attendanceRecord,
-        }));
+        setMarkedAttendance((prevAttendance) => [...prevAttendance, attendanceRecord]);
 
         alert("Attendance marked successfully!");
+
+        // Send the attendance data to the lecturer's page
+        sendAttendanceDataToLecturer(courseDoc.id, attendanceRecord);
       } else {
         alert("Course not found!");
         setLecturerName("");
@@ -115,12 +114,17 @@ function Dashboard() {
     }
   };
 
+
   // useEffect to fetch profile photo when component mounts
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
+    console.log("userData:", userData); // Debugging log
     setUser(userData);
-    fetchProfilePhoto(userData.matricNo);
+    if(userData && userData.matricNo) {
+      fetchProfilePhoto(userData.matricNo);
+    }
   }, []);
+  
 
   // Function to fetch profile photo
   const fetchProfilePhoto = async (matricNo) => {
@@ -144,7 +148,33 @@ function Dashboard() {
     const photo = e.target.files[0];
     setProfilePhoto(photo);
   };
+  const sendAttendanceDataToLecturer = async (courseId, attendanceRecord) => {
+    try {
+      const courseDoc = await firestore.collection("courses").doc(courseId).get();
+      if (courseDoc.exists) {
+        const courseData = courseDoc.data();
+        const lecturerName = courseData.lecturerName;
+        const attendanceSheetId = courseData.attendanceSheetId;
 
+        const attendanceRef = firestore.collection("attendance").doc(attendanceSheetId);
+        const attendanceDoc = await attendanceRef.get();
+
+        if (attendanceDoc.exists) {
+          const updatedAttendance = [...attendanceDoc.data().attendance, attendanceRecord];
+          await attendanceRef.update({
+            attendance: updatedAttendance,
+          });
+          console.log("Attendance data sent to lecturer's page successfully!");
+        } else {
+          console.log("Attendance document not found.");
+        }
+      } else {
+        console.log("Course document not found.");
+      }
+    } catch (error) {
+      console.error("Error sending attendance data to lecturer:", error);
+    }
+  };
   // Function to save profile photo
   const saveProfilePhoto = async () => {
     try {
@@ -199,6 +229,21 @@ function Dashboard() {
             />
             <button onClick={verifyLecturerCode}>Verify Course</button>
           </div>
+          {isAttendanceMarked && (
+      <div className="marked-attendance">
+        <h3>Marked Attendance:</h3>
+        <ul>
+          {Object.keys(markedAttendance).map((key, index) => (
+            <li key={index}>
+              <p>Matric No: {markedAttendance[key].matricNo}</p>
+              <p>Name: {markedAttendance[key].name}</p>
+              <p>Date: {markedAttendance[key].date}</p>
+              <p>Time: {markedAttendance[key].time}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
 
           {lecturerName && (
             <div className="course-details">
