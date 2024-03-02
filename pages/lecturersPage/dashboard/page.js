@@ -105,11 +105,11 @@ function LecturerDashboard() {
         fetchCourses(user.name);
   
         // Schedule the next update after 3 minutes
-        setTimeout(updateUniqueCode, 2 * 6 * 100); // 3 minutes in milliseconds
+        setTimeout(updateUniqueCode, 2 * 60 * 1000); // 3 minutes in milliseconds
       };
   
       // Schedule the first update after 3 minutes
-      setTimeout(updateUniqueCode, 2 * 6 * 100); // 3 minutes in milliseconds
+      setTimeout(updateUniqueCode, 2 * 60 * 1000); // 3 minutes in milliseconds
     }
   };
   

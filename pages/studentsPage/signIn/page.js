@@ -41,12 +41,12 @@ export default function SignIn() {
       <div className="signUpHeader">
         <Image src={Logo} alt="" width={100} height={100} />
         <h4 className="bold-text">Student Attendance</h4>
-        <h3>Sign Up As Student</h3>
+        <h3>Sign In As Student</h3>
       </div>
       <div className="signUpForm">
         {errorMessage && <p className="error-message" style={{fontSize:'2rem',textAlign:"center"}}>{errorMessage}</p>}
       <form onSubmit={handleSignIn}>
-      <label htmlFor="MatriculationNumber"> {/* Changed label */}
+      <label htmlFor="MatriculationNumber">
           <svg
               width="24"
               height="24"
