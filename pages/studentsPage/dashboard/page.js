@@ -254,7 +254,7 @@ function Dashboard() {
               type="text"
               value={lecturerCodeInput}
               onChange={handleLecturerCodeChange}
-              placeholder="Enter course code"
+              placeholder="Enter unique course code"
             />
             <button onClick={verifyLecturerCode}>Verify Course</button>
           </div>
