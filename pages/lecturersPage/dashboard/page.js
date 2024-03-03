@@ -13,33 +13,18 @@ function LecturerDashboard() {
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
     setUser(userData);
-
+  
     if (userData) {
       fetchCourses(userData.name);
     }
-  }, []);
-
+  }, []); // Trigger fetchCourses only on component mount, no dependencies
+  
   useEffect(() => {
     if (user) {
       fetchCourses(user.name);
     }
-  }, [user]);
-
-  const fetchCourses = async (lecturerName) => {
-    try {
-      if (!lecturerName) {
-        return;
-      }
-
-      const coursesRef = firestore.collection("courses").where("lecturerName", "==", lecturerName);
-      const snapshot = await coursesRef.get();
-      const fetchedCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCourses(fetchedCourses);
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      alert("Error fetching courses. Please try again later.");
-    }
-  };
+  }, [user]); // Trigger fetchCourses when the user changes
+  
 
   const handleInputChange = (e) => {
     let inputValue = e.target.value.toUpperCase();
@@ -105,15 +90,41 @@ function LecturerDashboard() {
         fetchCourses(user.name);
   
         // Schedule the next update after 3 minutes
-        setTimeout(updateUniqueCode, 2 * 60 * 1000); // 3 minutes in milliseconds
+        setTimeout(updateUniqueCode, 1 * 10 * 10); // 3 minutes in milliseconds
       };
   
       // Schedule the first update after 3 minutes
-      setTimeout(updateUniqueCode, 2 * 60 * 1000); // 3 minutes in milliseconds
+      setTimeout(updateUniqueCode, 1 * 10 * 10); // 3 minutes in milliseconds
     }
   };
+    
+  useEffect(() => {
+    // Function to check if it's time to update the unique code
+    const shouldUpdateCode = (lastUpdateTime) => {
+      const currentTime = Date.now();
+      // Check if 3 minutes (or your desired interval) have passed since the last update
+      return (currentTime - lastUpdateTime) >= (3 * 60 * 1000);
+    };
   
-
+    // Function to update the unique code
+    const updateUniqueCode = async (course) => {
+      const updatedUniqueCode = generateUniqueCode();
+      // Update the unique code and last update time in the database
+      await firestore.collection("courses").doc(course.id).update({ uniqueCode: updatedUniqueCode, lastUpdateTime: Date.now() });
+    };
+  
+    // Update unique codes for all courses every 3 minutes
+    const intervalId = setInterval(async () => {
+      const coursesToUpdate = courses.filter(shouldUpdateCode);
+      for (const course of coursesToUpdate) {
+        await updateUniqueCode(course);
+      }
+    }, 3 * 60 * 1000); // Every 3 minutes
+  
+    // Cleanup function to clear the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [courses]); // Trigger whenever the courses state changes
+  
   const handleCourseClick = async (course) => {
     setSelectedCourse(course);
     setIsFetchingAttendance(true); // Set loading indicator to true
@@ -130,53 +141,53 @@ function LecturerDashboard() {
     setCourseTitleInput(e.target.value.toUpperCase());
   };
 
-  const fetchAttendanceRecords = async (courseTitle) => {
-    if (!user) {
-      console.error("User not logged in");
+const fetchAttendanceRecords = async (courseTitle) => {
+  if (!user) {
+    console.error("User not logged in");
+    return;
+  }
+
+  setIsFetchingAttendance(true); // Set loading indicator to true
+  try {
+    // Retrieve course information directly from markAttendance's logic
+    const coursesRef = firestore.collection("courses");
+    const querySnapshot = await coursesRef
+      .where("lecturerName", "==", user.name)
+      .where("title", "==", courseTitle) // No toUpperCase() call
+      .get();
+
+    if (querySnapshot.empty) {
+      alert("No course found with the specified title.");
+      setIsFetchingAttendance(false); // Set loading indicator to false
       return;
     }
-  
-    setIsFetchingAttendance(true); // Set loading indicator to true
-    try {
-      // Retrieve course information directly from markAttendance's logic
-      const coursesRef = firestore.collection("courses");
-      const querySnapshot = await coursesRef
-        .where("lecturerName", "==", user.name)
-        .where("title", "==", courseTitle) // No toUpperCase() call
-        .get();
-  
-      if (querySnapshot.empty) {
-        alert("No course found with the specified title.");
-        return;
-      }
-  
-      const courseDoc = querySnapshot.docs[0];
-      const attendanceRef = courseDoc.ref.collection("attendance");
-  
-      // Fetch attendance records directly from the course's attendance subcollection
-      const attendanceSnapshot = await attendanceRef.get();
-  
-      if (attendanceSnapshot.empty) {
-        setAttendanceRecords([]); // 
-        return;
-      }
-  
-      const attendanceArray = attendanceSnapshot.docs.map(doc => ({
-        matricNo: doc.data().matricNo,
-        name: doc.data().name,
-        date: doc.data().date,
-        time: doc.data().time,
-        presence: doc.data().presence || 0, // Retrieve presence count
-      }));
-  
-      setAttendanceRecords(attendanceArray); // Set attendance records
-    } catch (error) {
-      console.error("Error fetching attendance records:", error);
-      alert("Error fetching attendance records. Please try again later.");
-    } finally {
+
+    const courseDoc = querySnapshot.docs[0];
+    const attendanceRef = courseDoc.ref.collection("attendance");
+
+    // Fetch attendance records directly from the course's attendance subcollection
+    const attendanceSnapshot = await attendanceRef.get();
+
+    if (attendanceSnapshot.empty) {
+      setAttendanceRecords([]); // Clear attendance records
       setIsFetchingAttendance(false); // Set loading indicator to false
+      return;
     }
-  };
+
+    const attendanceArray = attendanceSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    setAttendanceRecords(attendanceArray); // Set attendance records
+  } catch (error) {
+    console.error("Error fetching attendance records:", error);
+    alert("Error fetching attendance records. Please try again later.");
+  } finally {
+    setIsFetchingAttendance(false); // Set loading indicator to false
+  }
+};
+
   
   
   // Function to download the attendance sheet
@@ -194,6 +205,58 @@ function LecturerDashboard() {
     link.click();
     document.body.removeChild(link);
   };
+
+// Function to check if it's time to update the unique code
+const shouldUpdateCode = (lastUpdateTime) => {
+  const currentTime = Date.now();
+  // Check if 3 minutes (or your desired interval) have passed since the last update
+  return (currentTime - lastUpdateTime) >= (3 * 60 * 1000);
+};
+
+// Function to update the unique code
+
+const updateUniqueCode = async (course) => {
+  const updatedUniqueCode = generateUniqueCode();
+  // Update the unique code and last update time in the database
+  await firestore.collection("courses").doc(course.id).update({ uniqueCode: updatedUniqueCode, lastUpdateTime: Date.now() });
+};
+const handleManualUpdate = async (course) => {
+  try {
+    const updatedUniqueCode = generateUniqueCode(); // Generate a new unique code
+    await firestore.collection("courses").doc(course.id).update({ uniqueCode: updatedUniqueCode }); // Update the unique code in Firestore
+    fetchCourses(user.name); // Fetch updated courses
+  } catch (error) {
+    console.error("Error updating unique code:", error);
+    alert("Error updating unique code. Please try again later.");
+  }
+};
+
+
+// Fetch courses function
+const fetchCourses = async (lecturerName) => {
+  try {
+    if (!lecturerName) {
+      return;
+    }
+
+    const coursesRef = firestore.collection("courses").where("lecturerName", "==", lecturerName);
+    const snapshot = await coursesRef.get();
+    const fetchedCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Check if it's time to update the unique code for each course
+    fetchedCourses.forEach(async (course) => {
+      if (shouldUpdateCode(course.lastUpdateTime)) {
+        await updateUniqueCode(course);
+      }
+    });
+
+    setCourses(fetchedCourses);
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    alert("Error fetching courses. Please try again later.");
+  }
+};
+
 
   return (
     <div className="dashboard">
@@ -255,19 +318,20 @@ function LecturerDashboard() {
             </table>
             </div>
           )}
+{courses.length > 0 && (
+  <div className="added-courses">
+    <h3>Added Courses</h3>
+    <ul>
+      {courses.map((course, index) => (
+        <li key={index} >
+          {course.title} - Unique Code: {course.uniqueCode}
+          <button className="courseList" onClick={() => handleManualUpdate(course)}>Update Code</button>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
-          {courses.length > 0 && (
-            <div className="added-courses">
-              <h3>Added Courses</h3>
-              <ul>
-                {courses.map((course, index) => (
-                  <li key={index}>
-                    {course.title} - Unique Code: {course.uniqueCode}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
     </div>

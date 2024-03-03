@@ -521,3 +521,67 @@ button {
 .user-details {
   margin-left: 20px; /* Adjust margin as needed */
 }
+.courseList{
+ margin-left: 1rem;
+}
+.fetched-attendance {
+  margin-top: 20px;
+}
+
+.attendance-title {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.attendance-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.attendance-item {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.attendance-info {
+  margin: 5px 0;
+}
+/* In your CSS file */
+
+.attList {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Adjust shadow values as needed */
+  margin-bottom: 20px;
+  padding: 20px;
+  transition: box-shadow 0.3s ease;
+  list-style-type: none;
+}
+
+.attList:hover {
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1); /* Adjust shadow values for hover state */
+}
+
+.attList p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Additional styles if needed */
+.attList .matricNo {
+  font-weight: bold;
+}
+
+.attList .date {
+  color: #888;
+}
+
+.attList .time {
+  color: #888;
+}
+
+.attList .courseTitle {
+  color: #888;
+}

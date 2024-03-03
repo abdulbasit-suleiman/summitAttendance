@@ -9,11 +9,10 @@ function Dashboard() {
   const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
   const [lastMarkedDate, setLastMarkedDate] = useState(null);
   const [markedAttendance, setMarkedAttendance] = useState([]);
-
   const [isProfilePhotoUploaded, setIsProfilePhotoUploaded] = useState(false);
   const [profilePhotoURL, setProfilePhotoURL] = useState(null);
-
   const [profilePhoto, setProfilePhoto] = useState(null);
+  const [fetchedAttendance, setFetchedAttendance] = useState([]);
 
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
@@ -23,7 +22,7 @@ function Dashboard() {
   const handleLecturerCodeChange = (e) => {
     setLecturerCodeInput(e.target.value.toUpperCase());
   };
-  
+
   const verifyLecturerCode = async () => {
     try {
       if (!lecturerCodeInput) {
@@ -32,7 +31,9 @@ function Dashboard() {
       }
 
       const coursesRef = firestore.collection("courses");
-      const querySnapshot = await coursesRef.where("uniqueCode", "==", lecturerCodeInput).get();
+      const querySnapshot = await coursesRef
+        .where("uniqueCode", "==", lecturerCodeInput)
+        .get();
 
       if (!querySnapshot.empty) {
         const courseData = querySnapshot.docs[0].data();
@@ -55,78 +56,92 @@ function Dashboard() {
         alert("Please verify lecturer and course first.");
         return;
       }
-  
+
       const { matricNo, name } = user;
       const markedAt = new Date().toISOString();
       const markedDate = markedAt.split("T")[0];
-  
+
       const currentTime = new Date();
-      const twelveHoursAgo = new Date(currentTime.getTime() - 12 * 60 * 60 * 1000); // 12 hours ago
-  
+      const twelveHoursAgo = new Date(
+        currentTime.getTime() - 12 * 60 * 60 * 1000
+      ); // 12 hours ago
+
       const coursesRef = firestore.collection("courses");
       const querySnapshot = await coursesRef
         .where("lecturerName", "==", lecturerName)
         .where("title", "==", courseTitle)
         .get();
-  
+
       if (!querySnapshot.empty) {
         const courseDoc = querySnapshot.docs[0];
         const attendanceRef = courseDoc.ref.collection("attendance");
-  
+
         // Check if attendance for today exists
-        const attendanceSnapshot = await attendanceRef.where("matricNo", "==", matricNo)
+        const attendanceSnapshot = await attendanceRef
+          .where("matricNo", "==", matricNo)
           .where("date", "==", markedDate)
           .get();
-  
+
         let newMarkedAttendance = [...markedAttendance]; // Copy existing markedAttendance
-  
+        storeStudentAttendance(matricNo, markedDate, markedAt.split("T")[1].split(".")[0], courseTitle);
+
         if (!attendanceSnapshot.empty) {
           // If attendance exists, update the presence count
           const attendanceDoc = attendanceSnapshot.docs[0];
           const attendanceData = attendanceDoc.data();
           const existingPresence = attendanceData.presence || 0;
           const newPresence = existingPresence + 1;
-  
+
           await attendanceDoc.ref.update({
-            presence: newPresence
+            presence: newPresence,
           });
-  
+
           // Update presence in the markedAttendance array
-          newMarkedAttendance.forEach(attendance => {
-            if (attendance.matricNo === matricNo && attendance.date === markedDate) {
+          newMarkedAttendance.forEach((attendance) => {
+            if (
+              attendance.matricNo === matricNo &&
+              attendance.date === markedDate
+            ) {
               attendance.presence = newPresence;
             }
           });
-  
+
           alert("Attendance updated successfully!");
         } else {
           // If attendance doesn't exist for the day, add new attendance record
-          newMarkedAttendance.unshift({ // Prepend new attendance record
+          newMarkedAttendance.unshift({
+            // Prepend new attendance record
             matricNo: matricNo,
             name: name,
             date: markedDate,
             time: markedAt.split("T")[1].split(".")[0],
-            presence: 1 // Start with presence count as 1
+            presence: 1, // Start with presence count as 1
           });
-  
+
           await attendanceRef.add({
             matricNo: matricNo,
             name: name,
             date: markedDate,
             time: markedAt.split("T")[1].split(".")[0],
-            presence: 1 // Start with presence count as 1
+            presence: 1, // Start with presence count as 1
           });
-  
+
           alert("Attendance marked successfully!");
         }
-  
+
         // Update markedAttendance state
         setMarkedAttendance(newMarkedAttendance);
         setIsAttendanceMarked(true);
         setLastMarkedDate(markedDate);
-  
+
         // Send the attendance data to the lecturer's page
-        sendAttendanceDataToLecturer(courseDoc.id, newMarkedAttendance.length);
+        sendAttendanceDataToLecturer(
+          courseDoc.id,
+          newMarkedAttendance.length
+        );
+
+        // Store attendance for the student
+        storeStudentAttendance(matricNo, markedDate);
       } else {
         alert("Course not found!");
         setLecturerName("");
@@ -137,25 +152,27 @@ function Dashboard() {
       alert("Error marking attendance. Please try again later.");
     }
   };
-  
-  
-  
-  const sendAttendanceDataToLecturer = async (courseId, attendanceRecord, newMarkedAttendance) => {
+
+  const sendAttendanceDataToLecturer = async (
+    courseId,
+    attendanceRecord,
+    newMarkedAttendance
+  ) => {
     try {
       const courseDoc = await firestore.collection("courses").doc(courseId).get();
       if (courseDoc.exists) {
         const courseData = courseDoc.data();
         const lecturerName = courseData.lecturerName;
         const attendanceSheetId = courseData.attendanceSheetId;
-  
+
         const attendanceRef = firestore.collection("attendance").doc(attendanceSheetId);
         const attendanceDoc = await attendanceRef.get();
-  
+
         if (attendanceDoc.exists) {
           const updatedAttendance = [...attendanceDoc.data().attendance, attendanceRecord];
           await attendanceRef.update({
             attendance: updatedAttendance,
-            markedAttendance: newMarkedAttendance // Update markedAttendance in the attendance sheet
+            markedAttendance: newMarkedAttendance, // Update markedAttendance in the attendance sheet
           });
           console.log("Attendance data sent to lecturer's page successfully!");
         } else {
@@ -168,14 +185,50 @@ function Dashboard() {
       console.error("Error sending attendance data to lecturer:", error);
     }
   };
+
+  const storeStudentAttendance = async (matricNo, markedDate, markedTime, courseTitle) => {
+    try {
+      const studentAttendanceRef = firestore.collection("studentAttendance");
+      await studentAttendanceRef.add({
+        matricNo: matricNo,
+        date: markedDate,
+        time: markedTime,
+        courseTitle: courseTitle
+      });
+      console.log("Student attendance stored successfully!");
+    } catch (error) {
+      console.error("Error storing student attendance:", error);
+    }
+  };
   
+  const fetchAttendance = async () => {
+    try {
+      // Fetch attendance data for the current user
+      const attendanceRef = firestore.collection("studentAttendance");
+      const querySnapshot = await attendanceRef.where("matricNo", "==", user.matricNo).get();
   
+      const fetchedData = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedData.push({
+          matricNo: data.matricNo,
+          date: data.date,
+          time: data.time,
+          courseTitle: data.courseTitle
+        });
+      });
+  
+      setFetchedAttendance(fetchedData);
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      alert("Error fetching attendance. Please try again later.");
+    }
+  };
   
 
   // useEffect to fetch profile photo when component mounts
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
-    console.log("userData:", userData); // Debugging log
     setUser(userData);
     if(userData && userData.matricNo) {
       fetchProfilePhoto(userData.matricNo);
@@ -248,18 +301,17 @@ function Dashboard() {
               </div>
             </div>
           </div>
-
+  
           <div className="verify-course">
             <input
               type="text"
               value={lecturerCodeInput}
               onChange={handleLecturerCodeChange}
-              placeholder="Enter unique course code"
+              placeholder="Enter course code"
             />
             <button onClick={verifyLecturerCode}>Verify Course</button>
           </div>
-     
-
+  
           {lecturerName && (
             <div className="course-details">
               <h3>Lecturer: {lecturerName}</h3>
@@ -267,26 +319,42 @@ function Dashboard() {
               <button onClick={markAttendance}>Mark Attendance</button>
             </div>
           )}
-
-{isAttendanceMarked && (
-  <div className="marked-attendance">
-  <h3>Marked Attendance:</h3>
-  <ul>
-    {markedAttendance.map((attendance, index) => (
-      <li key={index}>
-        <p>Matric No: {attendance.matricNo}</p>
-        <p>Name: {attendance.name}</p>
-        <p>Date: {attendance.date}</p>
-        <p>Time: {attendance.time}</p>
-        <p>Presence: {attendance.presence}</p> {/* Display presence */}
-      </li>
-    ))}
-  </ul>
-</div>
-
+  
+  {fetchedAttendance.length > 0 && (
+  <div className="fetched-attendance">
+    <h3 className="attendance-title">Fetched Attendance:</h3>
+    <ul className="attendance-list">
+      {fetchedAttendance.map((attendance, index) => (
+        <li key={index} className="attendance-item">
+          <p className="attendance-info">Matric No: {attendance.matricNo}</p>
+          <p className="attendance-info">Date: {attendance.date}</p>
+          <p className="attendance-info">Time: {attendance.time}</p>
+          <p className="attendance-info">Course Title: {attendance.courseTitle}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
 )}
+  
+          <button onClick={fetchAttendance}>Fetch Attendance</button>
+  
+          {fetchedAttendance.length > 0 && (
+            <div className="fetched-attendance">
+              <h3>Fetched Attendance:</h3>
+              <ul>
+  {fetchedAttendance.map((attendance, index) => (
+    <li key={index} className="attList">
+      <p className="matricNo">Matric No: {attendance.matricNo}</p>
+      <p className="date">Date: {attendance.date}</p>
+      <p className="time">Time: {attendance.time}</p>
+      <p className="courseTitle">Course Title: {attendance.courseTitle}</p>
+    </li>
+  ))}
+</ul>
 
-
+            </div>
+          )}
+  
           {!isProfilePhotoUploaded && (
             <div className="profile-photo">
               <input type="file" accept="image/*" onChange={handleProfilePhotoChange} />
@@ -297,6 +365,7 @@ function Dashboard() {
       )}
     </div>
   );
+  
 }
 
 export default Dashboard;
