@@ -14,7 +14,49 @@ function Dashboard() {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [fetchedAttendance, setFetchedAttendance] = useState([]);
 
- 
+  const fetchLecturerLocation = async () => {
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    } catch (error) {
+      console.error("Error fetching lecturer's location:", error);
+      return null;
+    }
+  };
+
+  // Function to fetch the student's location
+  const fetchStudentLocation = async () => {
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      return { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    } catch (error) {
+      console.error("Error fetching student's location:", error);
+      return null;
+    }
+  };
+
+  // Function to calculate the distance between two locations
+  const calculateDistance = (location1, location2) => {
+    const lat1 = location1.latitude;
+    const lon1 = location1.longitude;
+    const lat2 = location2.latitude;
+    const lon2 = location2.longitude;
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180); // Convert degrees to radians
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return distance * 1000; // Convert to meters
+  };
+
+
 
   const handleMarkAttendance = async () => {
     const profilePhotoBlob = await fetch(profilePhotoURL).then((res) => res.blob());
@@ -69,16 +111,36 @@ function Dashboard() {
       console.error("Error verifying lecturer code:", error);
       alert("Error verifying lecturer code. Please try again later.");
     }
-    
-    if (lecturerName && courseTitle) {
-      history.push("/capture");
-    }
-  
-
   };
-
   const markAttendance = async () => {
     try {
+      // Fetch the lecturer's location
+      const lecturerLocation = await fetchLecturerLocation();
+      if (!lecturerLocation) {
+        alert("Unable to fetch lecturer's location.");
+        return;
+      }
+  
+      // Fetch the student's location
+      const studentLocation = await fetchStudentLocation();
+      if (!studentLocation) {
+        alert("Unable to fetch student's location.");
+        return;
+      }
+  
+      // Calculate the distance between lecturer's and student's locations
+      const distance = calculateDistance(lecturerLocation, studentLocation);
+  
+      // Define the acceptable range (in meters)
+      const acceptableRange = 50; // Adjust as needed
+  
+      // Check if the distance exceeds the acceptable range
+      if (distance > acceptableRange) {
+        alert("You are not in class. Attendance cannot be marked.");
+        return;
+      }
+  
+      // If all conditions are met, proceed with marking attendance
       if (!lecturerName || !courseTitle) {
         alert("Please verify lecturer and course first.");
         return;
@@ -148,11 +210,13 @@ function Dashboard() {
         setLecturerName("");
         setCourseTitle("");
       }
+  
     } catch (error) {
       console.error("Error marking attendance:", error);
       alert("Error marking attendance. Please try again later.");
     }
   };
+  
   
   const sendAttendanceDataToLecturer = async (
     courseId,
