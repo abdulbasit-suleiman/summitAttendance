@@ -38,6 +38,7 @@ body {
 .splashText {
   margin-left: -1rem;
   font-size: 12px;
+  color:  #319F43;
   margin-top: 6px;
   font-weight: 800;
   animation: bounceInOut 2s ease-in-out;
@@ -95,8 +96,8 @@ body {
 /* SIGNUP-Signin */
 .signUpLogin {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
+  flex-wrap:wrap;
+  justify-content:center;
   color: white;
   font-size: 1rem;
 }
@@ -106,9 +107,10 @@ body {
 }
 
 .boxcColor {
-  margin: 2rem;
+  margin: 2.1rem;
   border-radius: 1.2rem;
-  padding: 6rem;
+  padding: 5rem;
+  color: white;
   background: #319F43;
   text-align: center;
 }
@@ -119,8 +121,10 @@ body {
     font-size: 1rem;
     margin: .8rem;
     border-radius: 1.2rem;
-    padding: 3rem 1rem;
+    padding: 2.9rem 1.3rem;
     flex-direction: row;
+    /* margin:0 ; */
+
   }
   .loginLink {
     height: 20vh;
@@ -130,7 +134,18 @@ body {
     justify-content: center;
     font-size: 1.0rem;
     font-weight: 400;
+    margin: 0;
+    padding: 0;
   }
+}
+.signUpLogin {
+  display: flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  color: white;
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -148,6 +163,7 @@ a {
   justify-content: center;
   font-size: 1.2rem;
   font-weight: 600;
+  margin-top: -2rem;
 }
 
 /* STUDENT SIGNUP PAGE  */

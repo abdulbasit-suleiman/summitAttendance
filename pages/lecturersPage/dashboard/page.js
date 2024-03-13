@@ -45,58 +45,115 @@ function LecturerDashboard() {
 
   const saveCourse = async () => {
     if (newCourse.trim() !== "") {
-      const existingCourse = courses.find(c => c.title === newCourse);
-      if (existingCourse) {
-        alert("Error: A course with the same title already exists. Please choose a different title.");
-        return;
-      }
-    
-      let uniqueCode = generateUniqueCode();
-      const courseRef = firestore.collection("courses").doc();
-      const attendanceRef = firestore.collection("attendance").doc(); // Add attendance collection reference
-  
-      // Create a new attendance sheet
-      const attendanceData = {
-        courseTitle: newCourse,
-        lecturerName: user.name,
-        attendance: [], // Assuming you have an array of attendance records here
-      };
-  
-      await attendanceRef.set(attendanceData);
-  
-      // Create the course
-      await courseRef.set({
-        title: newCourse,
-        lecturerName: user.name,
-        uniqueCode: uniqueCode,
-        attendanceSheetId: attendanceRef.id, // Store the attendance sheet ID with the course
-      });
-  
-      fetchCourses(user.name);
-      setNewCourse("");
-  
-      const updateUniqueCode = async () => {
-        const updatedCourseRef = firestore.collection("courses").doc(courseRef.id);
-  
-        let updatedUniqueCode = generateUniqueCode();
-        while (updatedUniqueCode === uniqueCode) {
-          updatedUniqueCode = generateUniqueCode(); // Ensure the new code is different from the previous one
+      try {
+        // Check if geolocation is supported
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your browser.');
+          return;
         }
   
-        await updatedCourseRef.update({
-          uniqueCode: updatedUniqueCode,
+        // Request user's location
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+  
+          // Convert latitude and longitude to decimal degrees
+          const latitudeDecimal = latitude;
+          const longitudeDecimal = longitude;
+  
+          // Convert latitude and longitude to degrees, minutes, seconds
+          const latitudeDegrees = Math.floor(latitude);
+          const latitudeMinutes = Math.floor((latitude - latitudeDegrees) * 60);
+          const latitudeSeconds = ((latitude - latitudeDegrees - (latitudeMinutes / 60)) * 3600).toFixed(2);
+          const longitudeDegrees = Math.floor(longitude);
+          const longitudeMinutes = Math.floor((longitude - longitudeDegrees) * 60);
+          const longitudeSeconds = ((longitude - longitudeDegrees - (longitudeMinutes / 60)) * 3600).toFixed(2);
+  
+          // Convert latitude and longitude to hundredthsDecimal
+          const latitudeHundredthsDecimal = (latitudeDegrees + (latitudeMinutes / 60) + (latitudeSeconds / 3600)).toFixed(4);
+          const longitudeHundredthsDecimal = (longitudeDegrees + (longitudeMinutes / 60) + (longitudeSeconds / 3600)).toFixed(4);
+  
+          // Determine direction
+          const latitudeDirection = latitude >= 0 ? 'N' : 'S';
+          const longitudeDirection = longitude >= 0 ? 'E' : 'W';
+  
+          // Continue saving course with location details
+          let uniqueCode = generateUniqueCode();
+          const courseRef = firestore.collection("courses").doc();
+          const attendanceRef = firestore.collection("attendance").doc();
+  
+          // Create a new attendance sheet
+          const attendanceData = {
+            courseTitle: newCourse,
+            lecturerName: user.name,
+            attendance: [],
+          };
+  
+          await attendanceRef.set(attendanceData);
+  
+          // Create the course
+          await courseRef.set({
+            title: newCourse,
+            lecturerName: user.name,
+            uniqueCode: uniqueCode,
+            attendanceSheetId: attendanceRef.id,
+            lecturerLocation: {
+              latitude: latitudeDecimal,
+              longitude: longitudeDecimal,
+              degreesDecimal: {
+                latitude: latitudeDegrees,
+                longitude: longitudeDegrees,
+              },
+              minutesDecimal: {
+                latitude: latitudeMinutes,
+                longitude: longitudeMinutes,
+              },
+              secondsDecimal: {
+                latitude: latitudeSeconds,
+                longitude: longitudeSeconds,
+              },
+              hundredthsDecimal: {
+                latitude: latitudeHundredthsDecimal,
+                longitude: longitudeHundredthsDecimal,
+              },
+              direction: {
+                latitude: latitudeDirection,
+                longitude: longitudeDirection,
+              },
+            },
+          });
+  
+          fetchCourses(user.name);
+          setNewCourse("");
+  
+          const updateUniqueCode = async () => {
+            const updatedCourseRef = firestore.collection("courses").doc(courseRef.id);
+  
+            let updatedUniqueCode = generateUniqueCode();
+            while (updatedUniqueCode === uniqueCode) {
+              updatedUniqueCode = generateUniqueCode();
+            }
+  
+            await updatedCourseRef.update({
+              uniqueCode: updatedUniqueCode,
+            });
+  
+            fetchCourses(user.name);
+          };
+  
+          updateUniqueCode(); // Update unique code immediately after course creation
+        }, (error) => {
+          // Handle location error
+          console.error("Location error:", error);
+          alert("Error accessing location. Please try again later.");
         });
-  
-        fetchCourses(user.name);
-  
-        // Schedule the next update after 3 minutes
-        setTimeout(updateUniqueCode, 1 * 10 * 10); // 3 minutes in milliseconds
-      };
-  
-      // Schedule the first update after 3 minutes
-      setTimeout(updateUniqueCode, 1 * 10 * 10); // 3 minutes in milliseconds
+      } catch (error) {
+        console.error("Location error:", error);
+        alert("Error accessing location. Please try again later.");
+      }
     }
   };
+  
+
     
   useEffect(() => {
     // Function to check if it's time to update the unique code
