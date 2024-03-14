@@ -217,7 +217,6 @@ function Dashboard() {
     }
   };
   
-  
   const sendAttendanceDataToLecturer = async (
     courseId,
     attendanceRecord,
