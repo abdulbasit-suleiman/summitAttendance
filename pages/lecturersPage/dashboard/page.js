@@ -13,6 +13,7 @@ function LecturerDashboard() {
   const [isFetchingAttendance, setIsFetchingAttendance] = useState(false);
   const [newCourse, setNewCourse] = useState("");
   const [dateInput, setDateInput] = useState("");
+  const [fetchMethod, setFetchMethod] = useState("all");
 
   useEffect(() => {
     const userData = JSON.parse(sessionStorage.getItem("user"));
@@ -175,6 +176,16 @@ function LecturerDashboard() {
     }
   };
   
+// Function to handle fetching by course title
+const handleFetchByTitle = () => {
+  setFetchMethod("all");
+  fetchAttendanceRecords(courseTitleInput);
+};
+// Function to handle fetching by date
+const handleFetchByDate = () => {
+  setFetchMethod("date");
+  fetchAttendanceRecordsD(courseTitleInput, dateInput);
+};
 
 
   useEffect(() => {
@@ -430,8 +441,8 @@ function LecturerDashboard() {
                 <tr>
                   <th>Name</th>
                   <th>Matriculation Number</th>
-                  {/* <th>Date</th>
-                  <th>Time</th> */}
+                  <th>Date</th>
+                  <th>Time</th>
                   <th>Presence</th>
                   <th>ProfilePhoto</th>
                 </tr>
@@ -441,8 +452,8 @@ function LecturerDashboard() {
   <tr key={index}>
     <td>{record.name}</td>
     <td>{record.matricNo}</td>
-    {/* <td>{record.date}</td>
-    <td>{record.time}</td> */}
+    <td>{record.date}</td>
+    <td>{record.time}</td>
     <td>{record.presence}</td>
     <td>
       {record.photoUrl ? (
