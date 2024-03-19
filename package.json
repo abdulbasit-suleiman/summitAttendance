@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@faceio/fiojs": "^1.1.0",
+    "@fingerprintjs/fingerprintjs": "^4.2.2",
+    "@fingerprintjs/fingerprintjs-pro-react": "^2.6.2",
     "face-api.js": "^0.22.2",
+    "fingerprintjs2": "^2.1.4",
     "firebase": "^7.24.0",
     "leaflet": "^1.9.4",
     "next": "14.0.4",

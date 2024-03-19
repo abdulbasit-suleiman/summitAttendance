@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import Splash from "./studentsPage/studentSplash";
 import SignUpLogin from "./signUp-login";
 import Head from "next/head";
+import {
+  FpjsProvider,
+} from '@fingerprintjs/fingerprintjs-pro-react'
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   useEffect(() => {

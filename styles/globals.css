@@ -1,12 +1,12 @@
 * {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
-  box-sizing: border-box;
 }
 
 body {
   text-align: center;
+  font-family: sans-serif;
+  box-sizing: border-box;
 }
 
 /* INDEX PAGE */
@@ -29,7 +29,6 @@ body {
 
 .splashLogo {
   width: 100px;
-  /* Set your logo size */
   height: 100px;
   animation: bounceInOut 2s ease-in-out;
   animation: slideInLeft 1.2s ease-in;
@@ -88,31 +87,23 @@ body {
   font-weight: 800;
 }
 
-.signUpLogin {
-  display: flex;
-  flex-direction: row;
-}
+
 
 /* SIGNUP-Signin */
-.signUpLogin {
-  display: flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  color: white;
-  font-size: 1rem;
-}
+
 
 .boxcColor>a {
   color: white;
 }
 
 .boxcColor {
-  margin: 2.1rem;
+  margin: 2.4rem;
   border-radius: 1.2rem;
-  padding: 5rem;
+  padding: 6rem;
   color: white;
   background: #319F43;
   text-align: center;
+
 }
 
 @media (max-width: 768px) {
@@ -144,8 +135,8 @@ body {
   justify-content:center;
   color: white;
   font-size: 1rem;
-  margin: 0;
-  padding: 0;
+  margin-top: 2rem;
+  gap: 4rem;
 }
 
 a {
